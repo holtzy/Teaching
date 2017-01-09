@@ -1,0 +1,490 @@
+---
+title: "TP: Clustering et Visualisation"
+author: "Yan Holtz & Vincent Ranwez"
+date: "Janvier 2017"
+output:
+  rmdformats::readthedown:
+    highlight: kate
+  html_document:
+    toc: yes
+    toc_depth: 3
+---
+
+
+# Introduction
+Ce TD à pour objectif l'étude de la structure d'une population. On va utiliser comme données de départ une matrice d'**expression de gènes**. Pour 128 individus de blé dur, l'expression de 1000 gènes a été mesurée. L'objectif est de définir s'il existe une structuration de la population de blé dur est si cette éventuelle structure peut être reliée aux caractéristiques des individus.
+
+# 1/ Charger les données dans R
+La première étape consiste à télécharger les données qui sont disponibles sur le web. Créer un dossier dédié au TD sur votre ordinateur, et enregistrer ces fichiers dans ce dossier. Ouvrir ensuite R studio et créer un nouveau script dans lequel vous inscrirez toutes vos analyses.
+
+On commence par définir le **"path"**: le dossier dans lequel sont rangées les données.
+```{r}
+setwd("~/Documents/ENSEIGNEMENT/TP-CLUSTERING-SUPAGRO/DATA/READY_DATA")
+getwd()
+```
+
+Ensuite on va charger la matrice d'expression. Il existe 2 versions: avant et après normalisation. Pour ce faire on utilise la fonction **read.table**.
+```{r, cache=TRUE}
+setwd("~/Documents/ENSEIGNEMENT/TP-CLUSTERING-SUPAGRO/DATA/READY_DATA")
+data_raw=read.table("Expression.txt", header=T, row.names=1 )
+data_rlog=read.table("Expression_Rlognorm.txt", header=T, row.names=1)
+```
+
+Il faut toujours vérifier que les données ont été chargées correctement. Pour ce faire, on observe les premières lignes des tableaux ainsi que leurs dimensions. Observons les 5 premières lignes et 5 premières colonnes:
+
+```{r, eval=FALSE}
+# Raw data
+data_raw[1:5 , 1:5]
+```
+
+```{r my_tabledkd1, results='asis' , echo=FALSE}
+library(xtable)
+print(xtable(data_raw[1:5 , 1:5]), type = "html", include.rownames = T , comment=FALSE)
+```
+
+```{r, eval=FALSE}
+# Rlog data
+data_rlog[1:5 , 1:5]
+```
+
+```{r my_tabkokd1, results='asis' , echo=FALSE}
+print(xtable(data_rlog[1:5 , 1:5]), type = "html", include.rownames = T , comment=FALSE)
+```
+
+
+Ensuite, on va accéder rapidement à la dimensions des données (nb de ligne et nb de colonnes) via la fonction **dim**.
+```{r}
+# dimensions:
+dim(data_raw)
+dim(data_rlog)
+```
+
+On va aussi charger les infos sur les individus: nom de l'accessions, espèce...
+```{r}
+setwd("~/Documents/ENSEIGNEMENT/TP-CLUSTERING-SUPAGRO/DATA/READY_DATA")
+sum_expe=read.table("Carac_Individus.txt" , header=T, sep="\t")
+head(sum_expe, 5)
+```
+
+<span style="color:#DE9816">Q1.1/ Les données semblent-elles chargées correctement? Pourquoi?</span>   
+<span style="color:#DE9816">Q1.2/ Décrivez le jeu de données.</span>  
+<span style="color:#DE9816">Q1.3/ Y a t'il une différence avant et après normalisation? Laquelle?</span>  
+
+
+<br><br><br><br>
+  
+
+
+
+
+
+# 2/ Observer les données
+Avant d'essayer de clusteriser une population, il est préférable d'observer le jeu de données de manière plus générale, afin de le caractériser.
+
+On peut commencer par observer la distribution de l'expression brute des gènes pour l'individu numéro 1. On utilise la fonction **hist**:
+```{r}
+hist(data_raw[,1] , col="forestgreen" , breaks=1000 , xlab="expression" , main="")
+```
+```{r}
+hist(data_raw[,1] , col="forestgreen" , breaks=1000 , xlab="expression" , main="", xlim=c(0,1000))
+```
+
+<span style="color:#DE9816">Q2.1/ Décrivez cet histogramme.Que signifie une barre?</span>   
+<span style="color:#DE9816">Q2.2/ Comment pouvez vous décrire cette distribution?</span>   
+<span style="color:#DE9816">Q2.3/ Quel effet ceci pourrait avoir sur du clustering (ACP par exemple)</span>   
+<span style="color:#DE9816">Q2.4/ Comment peut on y remédier?</span>   
+
+
+On peut ensuite observer la corrélation entre 2 individus pris au hasard avec la fonction **plot**.
+```{r}
+plot(data_raw[,1], data_raw[,2], xlab="individu 1", ylab="individu 2")
+```
+
+On peut appliquer une transformation log pour éviter l'effet de ces gènes très exprimés.
+```{r}
+plot(log(data_raw[,1]), log(data_raw[,2]), xlab="individu 1", ylab="individu 2")
+```
+
+On voit qu'il existe un bruit de poisson, c'est à dire une grande variance pour les gènes faiblement exprimés.
+On peut le corriger avec le Rlogdds, méthode proposée par le package **DESeq2**
+```{r}
+plot(data_rlog[,1], data_rlog[,2], xlab="individu 1", ylab="individu 2")
+```
+
+C'est donc à partir de ce jeux de données normalisées que l'on va réaliser le clustering.
+
+<br><br><br><br>
+
+
+
+
+
+
+
+
+
+# 3/ ACP
+R propose une fonction pour réaliser une ACP: **prcomp**. Cependant, nous allons utiliser le package **FactoMineR** pour cette analyse.
+
+Commencer par charcher la library FactoMineR
+```{r}
+# library 
+library(FactoMineR)
+``` 
+
+La première étape consiste à faire les calculs de l'ACP avec la fonction **PCA**. Par défault, la fonction essaye d'expliquer la structure des lignes. Comme nos individus sont en colonne, il faut donc utiliser comme matrice d'entrée la transposée de notre matrice. 
+```{r}
+# calcul de l'ACP:
+res.PCA = PCA(t(data_rlog), scale.unit=TRUE, graph=F ) 
+```
+
+On peut observer la variance expliquée par les 10 premiers axes:
+```{r}
+barplot(res.PCA$eig[1:10,2] )
+```
+<span style="color:#DE9816">Q3.1/ Décrivez ce barplot. Quelle est le pourcentage de variance expliqué par les axes? Qu'en déduisez vous sur l'ACP?</span>   
+
+Il existe une fonction **plot.PCA** qui permet de représenter la position des individus sur les axes de l'ACP
+```{r}
+# Basic plot of the PCA :
+par(mfrow=c(1,2))
+plot.PCA(res.PCA, axes=c(1, 2), choix="ind")
+plot.PCA(res.PCA, axes=c(1, 2), choix="var", label="none")
+```
+
+<span style="color:#DE9816">Q3.2/ Décrivez le graphique</span>   
+<span style="color:#DE9816">Q3.3/ Que signifie 'par(mfrow)' ?</span>   
+<span style="color:#DE9816">Q3.4/ Y a t'il une structure dans la population?</span>   
+<span style="color:#DE9816">Q3.5/ Comment pourrait on améliorer ce graphique?</span>   
+
+On va améliorer le graphique en **i/** supprimant les noms d'individus qui sont illisibles **ii/** supprimant le graphique de droite qui n'est pas informatif lorsqu'il y a trop de variables **iii/** coloriant les points en fonction des caractéristiques des accessions.
+
+```{r}
+# Only 1 graph in the window
+par(mfrow=c(1,1))
+
+# Create a palette of color following the specie.
+library(RColorBrewer)
+coul <- brewer.pal(3, "Set1") 
+my_color=coul[as.numeric(sum_expe$specie)]
+
+# Make the plot
+plot.PCA(res.PCA, axes=c(1, 2), choix="ind", col.ind=my_color, label="none", cex=1.5)
+
+#Add a legend
+legend("topright", legend = levels(sum_expe$specie), col = coul, bty = "n",  pt.cex = 2, pch=20, cex=0.8)
+```
+
+<span style="color:#DE9816">Q3.6/ Pouvez vous faire le lien entre structure et espèce?</span>   
+<span style="color:#DE9816">Q3.7/ Réalisez la même étude, mais en fonction de l'espèce **ET** du traitement</span>   
+
+```{r}
+# Create a palette of color following the specie AND the treatment
+library(RColorBrewer)
+coul <- brewer.pal(6, "Set1") 
+my_color=coul[as.numeric(as.factor(paste(sum_expe$specie, sum_expe$treatment,sep="_")))]
+
+# Make the plot
+plot.PCA(res.PCA, axes=c(1, 2), choix="ind", col.ind=my_color, label="none", cex=1.5)
+
+#Add a legend
+legend("topright", legend = levels(as.factor(paste(sum_expe$specie, sum_expe$treatment,sep=" "))), col = coul, bty = "n",  pt.cex = 2, pch=20, cex=0.8)
+```
+<span style="color:#DE9816">Q3.6/ Commentez ce graph. Qu'est ce qui a la plus d'influence sur la structure de la population?</span>   
+
+<br><br><br><br>
+
+
+
+
+
+
+# 4/ Calcul de la distance entre individus
+Il existe plusieurs manières de calculer la distance entre 2 individus. On va utiliser la **distance euclidienne** implémentée dans la fonction **dist** de R, et calculer la **corrélation de Pearson** implémentée dans la fonction **cor**.
+
+```{r}
+my_dist=dist(t(data_rlog))
+my_cor=cor(data_rlog)
+```
+
+On peut réaliser un histogramme de ces distances:
+```{r}
+par(mfrow=c(1,2))
+hist(my_dist, col="grey", xlab="distribution des distances euclidiennes")
+hist(my_cor, col="grey", xlab="distribution des corrélations")
+```
+
+<span style="color:#DE9816">Q4.1/ Quelle distance vous paraît la plus adéquate? Quelle est la différence entre les 2?</span>   
+<span style="color:#DE9816">Q4.2/ Que signifie une forte corrélation? Une forte distance?</span>   
+
+<br><br><br><br>
+
+
+
+
+
+
+
+
+
+
+# 5/ Multi Dimensional Scaling (MDS)
+Le **MDS** permet de visualiser la structure d'une population à partir d'une matrice de **distances**. On doit donc avoir autant de ligne que de colonne, chaque chiffre représentant la distance entre individus: un chiffre faible signifie donc que 2 individus se ressemblent. En R, les calculs sont implémentés dans la donction **cmdscale**. 
+
+```{r}
+# Réaliser le MDS à partir de la matrice de distance euclidienne:
+fit <- cmdscale(as.dist(my_dist) , eig=TRUE, k=2)
+fit=as.data.frame(fit$points)
+colnames(fit)=c("x","y")
+```
+
+Pour chaque individus, on a obtenus une position sur l'axe des x, et une position sur l'axe des Y. On peut donc réaliser le graphique correspondant. Pour ce faire, on va utiliser la librarie **ggplot2** :
+
+```{r}
+library(ggplot2)
+```
+
+On réalise le graphique avec la fonction ggplot:
+```{r}
+# Réaliser le plot: x en fonction de y
+ggplot(fit, aes(x=x , y=y)) + geom_point() 
+```
+
+<span style="color:#DE9816">Q5.1/ Décrivez ce MDS. Comparez le à l'ACP obtenue auparavant</span>   
+<span style="color:#DE9816">Q5.2/ Amélioration possible?</span>   
+
+Comme précedemment, on peux comparer la structure observée de la structure attendue en coloriant les points selon l'espèce.
+```{r}
+# On merge le tableau avec les caractéristiques des individus.
+don=cbind(fit, sum_expe)
+
+# Réaliser le plot: x en fonction de y
+ggplot(don, aes(x=x , y=y, color=specie)) + geom_point() 
+```
+
+<span style="color:#DE9816">Q5.3/ Faites la même chose à partir de la matrice de corrélation.</span>   
+<span style="color:#DE9816">Q5.4/ Comment peux t'on faire apparaître en plus le traitement? Trouver comment le réaliser</span>   
+<span style="color:#DE9816">Q5.5/ Réaliser le même travail afin d'étudier la structure des gènes.</span> 
+```{r}
+# Réaliser le plot, avec une forme différente en fonction du traitement.
+ggplot(don, aes(x=x , y=y, color=specie, shape=treatment)) + geom_point() 
+```
+
+```{r}
+# Réaliser le plot, avec 2 graphes distincts en fonction du traitement.
+ggplot(don, aes(x=x , y=y, color=specie)) + geom_point() + facet_wrap(~treatment)
+```
+
+
+
+<br><br><br><br>
+
+
+
+
+
+
+
+
+
+# 6/ Dendrogramme
+Le dendrogramme ou arbre de clustering est implémenté dans la fonction **hclust** de R. Cette fonction prend en entrée une matrice de distance.
+```{r}
+# Compute the clustering method
+hc=hclust(my_dist)
+```
+
+On peut ensuite facilement ploter l'arbre calculé:
+```{r}
+plot(hc)
+```
+
+
+<span style="color:#DE9816">Q6.1/Cet arbre est il informatif? Une fois de plus, que peux t'on faire pour l'améliorer? </span>   
+
+Pour colorer les feuilles de l'arbre, on va utiliser la librairie **dendextend**. On commence par installer le package qui n'est pas encore disponible:
+
+```{r, eval=FALSE}
+#install
+install.packages("dendextend")
+```
+
+```{r, message=FALSE}
+#charge
+library(dendextend)
+```
+
+Cette librairie permet de customiser des dendrogrammes. On va partir de notre objet hc et améliorer le rendu graphique.
+```{r}
+# Transformer hc en un objet de type dendrogram
+dend <- as.dendrogram(hc)
+
+# Quelles sont les couleurs des feuilles actuellement?
+labels_colors(dend)
+
+# On créé un vecteur de couleur suivant l'espèce:
+colors_to_use <- as.numeric(sum_expe$specie)
+
+# On va trier ce vecteur selon l'ordre des feuilles dans le dendrogramme:
+colors_to_use <- colors_to_use[order.dendrogram(dend)]
+
+# On attribue ce vecteur à la couleur des feuilles:
+labels_colors(dend) <- colors_to_use
+
+# Et on plot le dendrogramme:
+plot(dend)
+```
+
+<span style="color:#DE9816">Q6.2/ La structure de la pop vous semble t'elle logique compte tenu des étapes précédentes?</span>   
+<span style="color:#DE9816">Q6.3/ Quelle est la méthode de clustering utilisée par défaut dans la fonction hclust?</span>   
+<span style="color:#DE9816">Q6.4/ Quelles sont les autres méthodes proposées?</span>   
+
+```{r, eval=FALSE}
+help(hclust)
+```
+<span style="color:#DE9816">Q6.5/ Essayez avec d'autres méthodes</span>   
+
+```{r}
+# Avec la distance de ward
+hc=hclust(my_dist, method="ward.D")
+
+# Transformer hc en un objet de type dendrogram
+dend <- as.dendrogram(hc)
+
+# On créé un vecteur de couleur suivant l'espèce:
+colors_to_use <- as.numeric(sum_expe$specie)
+
+# On va trier ce vecteur selon l'ordre des feuilles dans le dendrogramme:
+colors_to_use <- colors_to_use[order.dendrogram(dend)]
+
+# On attribue ce vecteur à la couleur des feuilles:
+labels_colors(dend) <- colors_to_use
+
+# Et on plot le dendrogramme:
+plot(dend)
+```
+
+<br><br><br><br>
+
+
+# 7/ Heatmap
+
+Souvent, on couple le dendrogramme avec un **heatmap**. Cela permet d'observer la relation entre chaque paire d'individu en plus de la structure. En R, on réalise cela avec la fonction **heatmap**:
+
+```{r}
+heatmap( as.matrix(my_dist))
+```
+
+Comme vous pouvez le voir ici, on a le même problème que pour le dendrogramme: la méthode utilisée par défaut n'est pas très performante. On va utiliser **ward** comme précédemment:
+```{r}
+heatmap( as.matrix(my_dist), hclustfun=function(d) hclust(d, method="ward.D"))
+```
+
+De même que pour le dendrogramme, on va ajouter une couleur au niveau des feuilles pour représenter les espèces:
+```{r}
+#Palette de couleur:
+coul <- brewer.pal(3, "Set1") 
+my_color=coul[as.numeric(sum_expe$specie)]
+
+# heatmap
+heatmap( as.matrix(my_dist), hclustfun=function(d) hclust(d, method="ward.D") , ColSideColors=my_color, RowSideColors=my_color )
+```
+
+
+
+<br><br><br><br>
+
+
+
+
+
+
+
+# 8/ Analyse de réseaux
+La représentation de type "réseaux" est une autre manière de représenter les relations entre individus. Chaque point va représenter un individu. Les individus sont reliés si leur similarité dépasse un certain seuil. Le format d'entrée est donc une matrice de corrélation. Ce type de graph est implémenté dans la library **igraph** de R.
+```{r, message=FALSE}
+library(igraph)
+```
+
+On va récupérer notre matrice de corrélation, et remplacer toutes les relations inférieures à notre seuil par des 0:
+```{r}
+#Fixer un seuil:
+my_seuil=0.7
+
+# Faire une nouvelle matrice de corrélation avec des 0 si < au seuil:
+input=my_cor
+input[input<my_seuil]=0
+diag(input)=0
+```
+
+On peut ensuite appliquer les fonctions de la librairie pour faire le graphique attendu:
+```{r}
+# On calcule la position de chaque point:
+g1<-graph.adjacency(input, weighted="TRUE", mode="undirected")
+lay<-layout.fruchterman.reingold(grap=g1, niter=6000)
+
+# Je créé une palette de couleur:
+coul <- brewer.pal(3, "Set1") 
+my_color=coul[as.numeric(sum_expe$specie)]
+
+# Réalisation du graphique:
+par(mar=c(0.5,0.5,0.5,0.5))
+plot.igraph(g1, 
+            layout=lay,
+            vertex.shape="circle",
+            vertex.label="" ,
+            vertex.color=my_color , 
+            vertex.size=8 , 
+            main="")
+ 
+#Finally I add a legend
+legend("topleft", legend = levels(sum_expe$specie), col = coul, bty = "n",  pt.cex = 2, pch=20)
+```
+
+<span style="color:#DE9816">Q7.1/ Réalisez le même graph avec des seuils différents. Décrivez ce qu'il se passe.</span>   
+<span style="color:#DE9816">Q7.2/ Exportez la figure au format pdf avec la commande **pdf**</span>   
+
+```{r, eval=FALSE}
+pdf("My_Igraph.pdf")
+... réalisation du graphique ...
+dev.off()
+```
+
+<span style="color:#DE9816">Q7.3/ Réalisez une boucle pour 10 seuils différents et exporter la figure obtenue en pdf dans chaque cas</span>   
+
+<br><br><br><br>
+
+
+
+
+# 9/ Going further
+
+R permet de réaliser des visualisations **interactives**: des graphiques sur lesquels on va pouvoir zoomer, se déplacer, cliquer pour obtenir de nouvelles infos etc... Vous pouvez voir des exemples sur le site: 
+
+**www.r-graph-gallery.com**
+
+On va réaliser un exemple avec la librarie **plotly**
+
+```{r, message=FALSE}
+library(plotly)
+```
+
+```{r}
+# On reprend les données du MDS:
+don=cbind(fit, sum_expe)
+```
+
+```{r}
+# utilisation de la commande ggplotly:
+p=ggplot(don, aes(x=x , y=y, color=specie)) + geom_point()
+ggplotly(p)
+```
+
+
+```{r}
+# Add a column with the hover text you need for each point
+don$my_text=paste( don$sample, don$specie, don$genotype, don$treatment  , sep=" | ")
+ 
+# Make the plot
+plot_ly(don, x=don$x, y=don$y , mode="markers", type="scatter", text=don$my_text , hoverinfo="text" , color=don$specie , marker=list( size=20 , opacity=0.4))
+```
