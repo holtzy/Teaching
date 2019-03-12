@@ -1,0 +1,463 @@
+---
+title: "Basic dataviz with R and ggplot2"
+author: "a practical by [Yan Holtz](https://github.com/holtzy)"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+mail: "yan.holtz.data@gmail.com"
+linkedin: "yan-holtz-2477534a"
+twitter: "r_graph_gallery"
+github: "holtzy"
+home: "www.yan-holtz.com"
+output:
+  epuRate::epurate:
+    toc: TRUE
+    number_sections: FALSE
+    code_folding: "show"
+---
+
+```{r global options, include = FALSE}
+knitr::opts_chunk$set( warning=FALSE, message=FALSE)
+
+library(rmarkdown)
+library(epuRate)
+
+# If necessary
+# library(devtools)
+# install_github("holtzy/epuRate")
+```
+
+<style>
+.questionNumber{
+  color: #69b3a2;
+  border: solid;
+  border-color: #69b3a2;
+  padding: 3px;
+  border-width: 1px;
+  border-radius: 2px;
+}
+.code-folding-btn {
+  display: none;
+}
+</style>
+
+<br><br>
+
+> This practical will lead you through the basics of ggplot2. It is split in 5 parts, each dedicated to a big chart family: correlation, distribution, ranking, part of a whole and evolution. 
+
+
+# Get ready
+***
+This practical will require several R packages. Here is how to install the `ggplot2` package:
+```{r, echo=TRUE}
+# Install the package if needed
+#install.packages("ggplot2")
+
+# Load it
+library(ggplot2)
+```
+
+<br><span class="questionNumber">Q0.1</span> - Install and load the following libraries that will be useful all along the practical: `dplyr`.
+```{r}
+# Install the package if needed
+#install.packages("dplyr")
+
+# Load it
+library(dplyr)
+```
+
+
+
+
+
+
+
+
+
+
+
+# 1- Correlation
+***
+The first part of this practical will guide you through common practice for the visualization of correlation. It will cover chart types like scatterplots, bubble plots, 2d density charts and others.
+
+<br><span class="questionNumber">Q1.1</span> - Load the `gapminder` dataset stored in the `gapminder` package. Have a look to the 6 first rows using the `head()` function. Describe briefly what you see as comments in your script. Check how many rows are available with `nrow()`
+```{r}
+# Install the package if needed
+#install.packages("gapminder")
+
+# Load it
+library(gapminder)
+
+# Have a look to the first rows
+head(gapminder)
+
+# How many rows?
+nrow(gapminder)
+```
+
+
+<br><span class="questionNumber">Q1.2</span> - How many years are available in this dataset? How many data-points for each year? Same question for `country` and `continent`. Use the `nlevels()` function to know the number of levels of a factor. Use the `table()` function to see the occurence of each level.
+
+```{r}
+# Number of different year?
+gapminder %>%
+  select(year) %>%
+  unique() %>%
+  nrow()
+# or
+length(unique(gapminder$year))
+
+# Number of country available per year?
+gapminder %>%
+  group_by(year) %>%
+  summarize( n=n() )
+```
+
+
+
+<br><span class="questionNumber">Q1.3</span> Build a [scatterplot](https://www.r-graph-gallery.com/scatterplot) showing the relationship between `gdpPercap` and `lifeExp` in 1952. What do you observe?
+
+```{r, fig.align="center"}
+# basic scatterplot
+gapminder %>%
+  filter(year=="1952") %>%
+  ggplot( aes(x=gdpPercap, y=lifeExp)) +
+    geom_point()
+```
+
+
+<br><span class="questionNumber">Q1.4</span> On the previous chart, one country is very different. Which one is it?
+```{r, fig.align="center"}
+# Number of different year?
+gapminder %>%
+  filter(year=="1952" & gdpPercap>90000) 
+```
+
+
+<br><span class="questionNumber">Q1.5</span> Build the same chart, but get rid of this country. What trend do you observe? Does it make sense? What's missing? What could be better?
+```{r, fig.align="center"}
+# basic scatterplot
+gapminder %>%
+  filter(year=="1952" & country!="Kuwait") %>%
+  ggplot( aes(x=gdpPercap, y=lifeExp)) +
+    geom_point()
+```
+
+
+
+<br><span class="questionNumber">Q1.6</span> - Color dots according to their `continent`. In the `aes()` part of the code, use the `color` argument.
+```{r, fig.align="center"}
+gapminder %>%
+  filter(year=="1952" & country!="Kuwait") %>%
+  ggplot( aes(x=gdpPercap, y=lifeExp, color=continent)) +
+    geom_point()
+```
+
+
+
+
+<br><span class="questionNumber">Q1.7</span> - Let's observe an additional variable: make the circle size proportionnal to the population (`pop`). This is done with the `size` argument of `aes()`. How do you call this kind of chart?
+```{r, fig.align="center"}
+gapminder %>%
+  filter(year=="1952" & country!="Kuwait") %>%
+  ggplot( aes(x=gdpPercap, y=lifeExp, color=continent, size=pop)) +
+    geom_point()
+```
+
+
+
+<br><span class="questionNumber">Bonus</span> You're in advance? Try to do the following:
+
+- custom the general appearance using the `theme_ipsum` of the `hrbrthemes` library.
+- add transparency to circles to limit overlapping impact, with the `alpha` argument of `aes`
+- sort your data by pop size to put the small circle on top of the chart, not hidden by big bubbles
+- use the `ggplotly()` function of the `plotly` package to make this chart interactive
+
+```{r, fig.align="center"}
+# Additionnal packages:
+library(hrbrthemes) # for general style
+library(plotly)     # to make the chart interactive
+
+# Chart
+p <- gapminder %>%
+  filter(year=="1952" & country!="Kuwait") %>%
+  arrange(desc(pop)) %>%
+  ggplot( aes(x=gdpPercap, y=lifeExp, fill=continent, size=pop)) +
+    geom_point(alpha=0.7, stroke="white", shape=21) +
+    theme_ipsum()
+
+# Interactive more
+ggplotly(p)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 2- Distribution
+***
+This second part is dedicated to the visualization of distribution. It is split in 2 parts:
+
+- Visualizing one distribution
+- Comparing distribution for several groups or variables
+
+<br><br>
+
+## 2.1 - One distribution
+
+[Example dataset](https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/1_OneNum.csv) provides the AirBnb night prices of ~1000 appartments on the French Riviera. Data is stored on Github and can be loaded in R as follow:
+```{r}
+# Load dataset from github
+data <- read.table("https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/1_OneNum.csv", header=TRUE)
+```
+
+<br><span class="questionNumber">Q2.1.1</span> - How many rows in the dataset? (use `nrow()`) What is the min? The max? (use `summary()`). Do you see anything strange? What kind of chart would you build to visualize this kind of data?
+```{r}
+#nrow(data)
+#summary(data)
+```
+
+<br><span class="questionNumber">Q2.1.2</span> - Build a histogram of the data with `geom_histogram()`. Are you happy with the output? How can we improve it?
+```{r, fig.align="center"}
+data %>%
+  ggplot( aes(x=price)) +
+    geom_histogram()
+```
+
+
+<br><span class="questionNumber">Q2.1.3</span> - Build a histogram without price over 1500 euros. `ggplot2` displays a warning message, why? What does it mean? What's the main caveat of histograms?
+```{r, fig.align="center"}
+data %>%
+  filter(price<1500) %>%
+  ggplot( aes(x=price)) +
+    geom_histogram()
+```
+
+<br><span class="questionNumber">Q2.1.3</span> - Build the histogram with different values of `binwidth`, for prices <400. What do you observe? Is it important to play with this parameter?
+```{r, fig.align="center"}
+data %>%
+  filter(price<400) %>%
+  ggplot( aes(x=price)) +
+    geom_histogram(binwidth = 2)
+```
+
+<br><span class="questionNumber">Q2.1.4</span> - Use `geom_density()` to build a density chart. Use the `fill` argument to set the color. Use the `help()` function to find out what is the equivalent of `bin_width` for density chart? Check its effect using different values.
+
+```{r, fig.align="center"}
+data %>%
+  filter(price<1000) %>%
+  ggplot( aes(x=price)) +
+    geom_density(color="transparent", fill="#69b3a2", bw=5)
+```
+
+
+
+<br><br>
+
+
+
+## 2.2 - Several distributions
+
+<u>Dataset</u>: questions like *What probability would you assign to the phrase ???Highly likely???* were asked. Answers were given in the range 0-100. It allow to understand how people perceive probability vocabulary. Data is stored on Github and can be loaded in R as follow:
+```{r}
+# Load dataset from github
+data <- read.table("https://raw.githubusercontent.com/holtzy/Teaching/master/DATA/probability.csv", header=TRUE, sep=",")
+```
+
+<br><span class="questionNumber">Q2.2.1</span> - As usual, check data main features with `nrow()`, `summary()` or any other function you think is useful.
+
+```{r, eval=FALSE}
+# Data size?
+nrow(data)
+
+# occurence of each word:
+table(data$text)
+```
+
+<br><span class="questionNumber">Q2.2.2</span> - What kind of chart would allow to compare the 8 categories?
+
+
+<br><span class="questionNumber">Q2.2.3</span> - Build a basic boxplot using the default options of `geom_boxplot`()
+
+```{r, fig.align="center"}
+ggplot(data, aes(x=text, y=value, fill=text)) +
+    geom_boxplot() 
+```
+
+
+
+<br><span class="questionNumber">Q2.2.4</span> - What do you observe? Can you improve this chart? What would you change? Do you remind what the different parts of the box mean?
+
+<br><span class="questionNumber">Q2.2.5</span> - Apply the following modifications to the previous boxplot:
+
+- order groups (increasing order).
+- flip X and Y axis (`coord_flip()`)
+- remove legend (`theme`)
+
+```{r, fig.align="center"}
+# Library forcats to reorder data
+library(forcats)
+
+# Reorder data
+data %>%
+  mutate(text = fct_reorder(text, value, .fun = median)) %>%
+  ggplot(aes(x=text, y=value, fill=text)) +
+    geom_boxplot() +
+    theme(
+      legend.position = "none"
+    ) +
+    coord_flip()
+```
+
+
+
+
+<br><span class="questionNumber">Q2.2.6</span> - What is the main caveat with boxplot? How can we do better?
+
+```{r, fig.align="center"}
+# Library forcats to reorder data
+library(forcats)
+
+# Reorder data
+data %>%
+  mutate(text = fct_reorder(text, value, .fun = median)) %>%
+  ggplot(aes(x=text, y=value, fill=text)) +
+    geom_boxplot() +
+    geom_jitter(color="grey") +
+    theme(
+      legend.position = "none"
+    ) +
+    coord_flip()
+```
+
+<br><span class="questionNumber">Bonus</span> You're in advance? Try to do the following:
+
+- build a violin plot with `geom_violin()`
+- search the internet to build a ridgeline chart.
+- find out how to add a red circle to represent the mean of each group
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 3- Ranking
+***
+Let's talk about the quantity of weapons exported by the top 50 largest exporters in 2017 ([source](http://armstrade.sipri.org/armstrade/page/toplist.php)). The dataset is available [here](https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/7_OneCatOneNum.csv). Load it in R:
+
+```{r}
+# Load dataset from github
+data <- read.table("https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/7_OneCatOneNum.csv", header=TRUE, sep=",")
+```
+
+
+
+
+
+
+<br><span class="questionNumber">Q3.1</span> - What kind of chart can you build with this dataset? Which one would be the best in your opinion?
+
+<br><span class="questionNumber">Q3.2</span> - Start with a basic barplot using `geom_bar()`.
+```{r, fig.align="center"}
+data %>%
+  ggplot( aes(x=Country, y=Value) ) +
+    geom_bar(stat="identity", fill="#69b3a2")
+```
+
+
+<br><span class="questionNumber">Q3.3</span> - Previous barplot is a bit disappointing isn't it? What can you improve? Do it!
+
+```{r, fig.align="center"}
+data %>%
+  filter(!is.na(Value)) %>%
+  arrange(Value) %>%
+  mutate(Country=factor(Country, Country)) %>%
+  ggplot( aes(x=Country, y=Value) ) +
+    geom_bar(stat="identity", fill="#69b3a2") +
+    coord_flip() +
+    theme(
+      legend.position="none"
+    ) +
+    xlab("")
+```
+
+
+
+
+
+
+# 4- Evolution
+***
+let's consider the evolution of the [bitcoin](https://en.wikipedia.org/wiki/Bitcoin) price between April 2013 and April 2018.
+
+```{r}
+# Load dataset from github
+data <- read.table("https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/3_TwoNumOrdered.csv", header=T)
+data$date <- as.Date(data$date)
+```
+
+
+```{r, fig.align="center"}
+data %>%
+  ggplot( aes(x=date, y=value)) +
+    geom_line(color="#69b3a2")
+```
+
+
+```{r, fig.align="center"}
+data %>%
+  ggplot( aes(x=date, y=value)) +
+    geom_area(color="#69b3a2", fill="#69b3a2")
+```
+
+
+
+
+
+```{r, fig.align="center"}
+data %>%
+  tail(10) %>%
+  ggplot( aes(x=date, y=value)) +
+    geom_area(fill="#69b3a2", alpha=0.5) +
+    geom_line(color="#69b3a2") +
+    geom_point()
+```
+
