@@ -230,8 +230,8 @@ data <- read.table("https://raw.githubusercontent.com/holtzy/data_to_viz/master/
 
 <br><span class="questionNumber">Q2.1.1</span> - How many rows in the dataset? (use `nrow()`) What is the min? The max? (use `summary()`). Do you see anything strange? What kind of chart would you build to visualize this kind of data?
 ```{r}
-nrow(data)
-summary(data)
+#nrow(data)
+#summary(data)
 ```
 
 <br><span class="questionNumber">Q2.1.2</span> - Build a histogram of the data with `geom_histogram()`. Are you happy with the output? How can we improve it?
@@ -271,38 +271,193 @@ data %>%
 
 <br><br>
 
+
+
 ## 2.2 - Several distributions
+
+<u>Dataset</u>: questions like *What probability would you assign to the phrase ???Highly likely???* were asked. Answers were given in the range 0-100. It allow to understand how people perceive probability vocabulary. Data is stored on Github and can be loaded in R as follow:
+```{r}
+# Load dataset from github
+data <- read.table("https://raw.githubusercontent.com/holtzy/Teaching/master/DATA/probability.csv", header=TRUE, sep=",")
+```
+
+<br><span class="questionNumber">Q2.2.1</span> - As usual, check data main features with `nrow()`, `summary()` or any other function you think is useful.
+
+```{r, eval=FALSE}
+# Data size?
+nrow(data)
+
+# occurence of each word:
+table(data$text)
+```
+
+<br><span class="questionNumber">Q2.2.2</span> - What kind of chart would allow to compare the 8 categories?
+
+
+<br><span class="questionNumber">Q2.2.3</span> - Build a basic boxplot using the default options of `geom_boxplot`()
+
+```{r, fig.align="center"}
+ggplot(data, aes(x=text, y=value, fill=text)) +
+    geom_boxplot() 
+```
+
+
+
+<br><span class="questionNumber">Q2.2.4</span> - What do you observe? Can you improve this chart? What would you change? Do you remind what the different parts of the box mean?
+
+<br><span class="questionNumber">Q2.2.5</span> - Apply the following modifications to the previous boxplot:
+
+- order groups (increasing order).
+- flip X and Y axis (`coord_flip()`)
+- remove legend (`theme`)
+
+```{r, fig.align="center"}
+# Library forcats to reorder data
+library(forcats)
+
+# Reorder data
+data %>%
+  mutate(text = fct_reorder(text, value, .fun = median)) %>%
+  ggplot(aes(x=text, y=value, fill=text)) +
+    geom_boxplot() +
+    theme(
+      legend.position = "none"
+    ) +
+    coord_flip()
+```
+
+
+
+
+<br><span class="questionNumber">Q2.2.6</span> - What is the main caveat with boxplot? How can we do better?
+
+```{r, fig.align="center"}
+# Library forcats to reorder data
+library(forcats)
+
+# Reorder data
+data %>%
+  mutate(text = fct_reorder(text, value, .fun = median)) %>%
+  ggplot(aes(x=text, y=value, fill=text)) +
+    geom_boxplot() +
+    geom_jitter(color="grey") +
+    theme(
+      legend.position = "none"
+    ) +
+    coord_flip()
+```
+
+<br><span class="questionNumber">Bonus</span> You're in advance? Try to do the following:
+
+- build a violin plot with `geom_violin()`
+- search the internet to build a ridgeline chart.
+- find out how to add a red circle to represent the mean of each group
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 3- Ranking
+***
+Let's talk about the quantity of weapons exported by the top 50 largest exporters in 2017 ([source](http://armstrade.sipri.org/armstrade/page/toplist.php)). The dataset is available [here](https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/7_OneCatOneNum.csv). Load it in R:
 
 ```{r}
 # Load dataset from github
-data <- read.table("https://raw.githubusercontent.com/zonination/perceptions/master/probly.csv", header=TRUE, sep=",")
-data
-library(dplyr)
-library(tidyr)
-data <- data %>% 
-  gather(key="text", value="value") %>%
-  mutate(text = gsub("\\.", " ",text)) %>%
-  mutate(value = round(as.numeric(value),0))
-
-data <- data %>% filter(text %in%  c("Almost No Chance", "Improbable", "Unlikely", "Probably Not", "About Even", "Likely", "We believe", "Very Good Chance", "Almost Certainly"))
-
-write.table(data)
-library(ggplot2)
-data %>%
-  ggplot( aes(x=text, y=value, fill=text)) +
-    geom_boxplot() +
-    geom_jitter(color="grey", alpha=0.3, size=0.9) +
-    theme(
-      legend.position="none"
-    ) +
-    coord_flip() +
-    xlab("") +
-    ylab("Assigned Probability (%)")
-
+data <- read.table("https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/7_OneCatOneNum.csv", header=TRUE, sep=",")
 ```
 
 
 
 
 
+
+<br><span class="questionNumber">Q3.1</span> - What kind of chart can you build with this dataset? Which one would be the best in your opinion?
+
+<br><span class="questionNumber">Q3.2</span> - Start with a basic barplot using `geom_bar()`.
+```{r, fig.align="center"}
+data %>%
+  ggplot( aes(x=Country, y=Value) ) +
+    geom_bar(stat="identity", fill="#69b3a2")
+```
+
+
+<br><span class="questionNumber">Q3.3</span> - Previous barplot is a bit disappointing isn't it? What can you improve? Do it!
+
+```{r, fig.align="center"}
+data %>%
+  filter(!is.na(Value)) %>%
+  arrange(Value) %>%
+  mutate(Country=factor(Country, Country)) %>%
+  ggplot( aes(x=Country, y=Value) ) +
+    geom_bar(stat="identity", fill="#69b3a2") +
+    coord_flip() +
+    theme(
+      legend.position="none"
+    ) +
+    xlab("")
+```
+
+
+
+
+
+
+# 4- Evolution
+***
+let's consider the evolution of the [bitcoin](https://en.wikipedia.org/wiki/Bitcoin) price between April 2013 and April 2018.
+
+```{r}
+# Load dataset from github
+data <- read.table("https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/3_TwoNumOrdered.csv", header=T)
+data$date <- as.Date(data$date)
+```
+
+
+```{r, fig.align="center"}
+data %>%
+  ggplot( aes(x=date, y=value)) +
+    geom_line(color="#69b3a2")
+```
+
+
+```{r, fig.align="center"}
+data %>%
+  ggplot( aes(x=date, y=value)) +
+    geom_area(color="#69b3a2", fill="#69b3a2")
+```
+
+
+
+
+
+```{r, fig.align="center"}
+data %>%
+  tail(10) %>%
+  ggplot( aes(x=date, y=value)) +
+    geom_area(fill="#69b3a2", alpha=0.5) +
+    geom_line(color="#69b3a2") +
+    geom_point()
+```
 
