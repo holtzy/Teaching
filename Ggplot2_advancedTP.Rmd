@@ -38,8 +38,8 @@ library(epuRate)
   display: none;
 }
 
-.Correction { display: none }
-.Question { display: block }
+.Correction { display: block }
+.Question { display: none }
 
 </style>
 
