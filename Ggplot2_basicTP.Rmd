@@ -73,7 +73,7 @@ library(ggplot2)
 ```
 
 <br><br><br><span class="questionNumber">Q0.2</span> Install and load `dplyr`. `dplyr` is part of the tidyverse and is very useful for data manipulation. It also provides the `%>%` operators that allows to 'pipe' commands.
-```{r, fig.align="center", class.source="Correction",results='hide',echo=FALSE}
+```{r, class.source="Correction",fig.show="hide",echo=FALSE}
 # Install the package if needed
 #install.packages("dplyr")
 
@@ -113,7 +113,7 @@ nrow(...)
 
 
 
-```{r, fig.align="center", class.source="Correction",results='hide',echo=FALSE}
+```{r, class.source="Correction",fig.show="hide",echo=FALSE}
 # Install the package if needed
 #install.packages("gapminder")
 

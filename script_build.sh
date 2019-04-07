@@ -11,13 +11,13 @@ rmarkdown::render("Ggplot2_basicTP.Rmd" )
 q("no")
 
 # Run the basic TP .rmd document WITH correction
-cat Ggplot2_basicTP.Rmd | sed 's/class.source="Question",echo=TRUE/class.source="Question",echo=FALSE/' | sed 's/eval=FALSE,echo=FALSE/eval=TRUE,echo=TRUE/' > tmp.Rmd
+cat Ggplot2_basicTP.Rmd | sed 's/class.source="Question",echo=TRUE/class.source="Question",echo=FALSE/' | sed 's/,fig.show="hide",echo=FALSE//' > tmp.Rmd
 R
 library(rmarkdown)
 rmarkdown::render("tmp.Rmd" ) 
 q("no")
 mv tmp.html Ggplot2_basicTP_correction.html
-
+rm tmp.Rmd
 
 
 
