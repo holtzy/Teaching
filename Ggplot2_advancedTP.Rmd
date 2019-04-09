@@ -33,21 +33,18 @@ library(epuRate)
   padding: 3px;
   border-width: 1px;
   border-radius: 2px;
+  margin-top: 200px;
 }
 .code-folding-btn {
   display: none;
 }
-
-.Correction { display: block }
-.Question { display: none }
-
 </style>
 
 
 
 <br><br>
 
-> This practical follows the previous basic [introduction to ggplot2](https://www.yan-holtz.com/teaching). It allows to go further with ggplot2: how to annotate a chart, how to build interactive charts, how to customize colors, and more.
+> This practical follows the previous basic [introduction to ggplot2](https://www.yan-holtz.com/teaching). It allows to go further with `ggplot2`: annotation, theme customization, color palette, output formats, scales, and more.
 
 
 
@@ -64,7 +61,14 @@ library(ggplot2)
 library(dplyr)
 library(hrbrthemes)
 library(viridis)
+library(plotly)
 ```
+
+
+
+
+
+
 
 
 
@@ -74,13 +78,26 @@ library(viridis)
 
 ## &rarr; Titles
 
-<br><span class="questionNumber">Q1.1</span> - The code below builds a basic histogram for values under 300. Add code to:
+<br><span class="questionNumber">Q1.1</span> The code below builds a basic histogram for Rbnb apartment prices on the French Riviera. It shows only value under 300 euros. Add code to:
 
 - add a title with `ggtitle()`
 - change axis labels `xlab()` and `ylab()`
 - change axis limits with `xlim()` and `ylim()`
 
-```{r, class.source='myCorrection'}
+```{r, eval=FALSE, class.source="Question",echo=TRUE }
+# Load dataset from github
+data <- read.table("https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/1_OneNum.csv", header=TRUE)
+
+# Make the histogram
+data %>%
+  filter( price<300 ) %>%
+  ggplot( aes(x=price)) +
+    geom_histogram() +
+    ...
+```
+
+
+```{r, class.source="Correction",fig.show="hide",echo=FALSE,     fig.show='asis'}
 # Libraries
 library(ggplot2)
 
@@ -99,21 +116,7 @@ data %>%
 ```
 
 
-```{r, eval=FALSE, class.source='myQuestion'}
-# Libraries
-library(ggplot2)
 
-# Load dataset from github
-data <- read.table("https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/1_OneNum.csv", header=TRUE)
-
-# Make the histogram
-data %>%
-  filter( price<300 ) %>%
-  ggplot( aes(...)) +
-    geom_... +
-    ggtitle(...) +
-    xlab(...
-```
 
 
 
@@ -122,13 +125,29 @@ data %>%
 
 All `ggplot2` chart components can be changed using the `theme()` function. You can see a complete list of components in the official [documentation](https://ggplot2.tidyverse.org/reference/theme.html).
 
-<br><span class="questionNumber">Q1.2</span> - Reproduce the previous histogram and change:
+<u>Note</u>: components are changed using different functions: `element_text()`, `element_line()` for lines and so on..
+
+<br><br><br><span class="questionNumber">Q1.2</span> Reproduce the previous histogram and change:
 
 - plot title size and color with `plot.title`
 - X axis title size and color with `axis.title.x`
 - Grid appearance with `panel.grid.major`
 
-```{r}
+```{r, eval=FALSE, class.source="Question",echo=TRUE }
+# Make the histogram
+data %>%
+  filter( price<300 ) %>%
+  ggplot( aes(x=price)) +
+    ... +
+    theme(
+      plot.title = element_text(size=..., color=...),
+      ...,
+      ...
+    )
+```
+
+
+```{r, class.source="Correction",fig.show="hide",echo=FALSE,     fig.show='asis'}
 # Make the histogram
 data %>%
   filter( price<300 ) %>%
@@ -148,9 +167,14 @@ data %>%
 
 
 
+
+
+
+
+
 ## &rarr; Themes
 
-<br><span class="questionNumber">Q1.3</span> - `ggplot2` offers a set of pre-built themes. Try the followings to see which one you like the most:
+<br><span class="questionNumber">Q1.3</span> `ggplot2` offers a set of pre-built themes. Try the followings to see which one you like the most:
 
 - `theme_bw()`
 - `theme_dark()`
@@ -159,12 +183,17 @@ data %>%
 
 See a complete list [here](https://www.r-graph-gallery.com/192-ggplot-themes/).
 
-```{r}
-# Libraries
-library(tidyverse)
-library(hrbrthemes)
-library(viridis)
+```{r, eval=FALSE, class.source="Question",echo=TRUE }
+# Load dataset from github
+data <- read.table("https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/1_OneNum.csv", header=TRUE)
 
+# Make the histogram
+data %>%
+  ... +
+    theme_classic()
+```
+
+```{r, class.source="Correction",fig.show="hide",echo=FALSE,     fig.show='asis'}
 # Load dataset from github
 data <- read.table("https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/1_OneNum.csv", header=TRUE)
 
@@ -179,10 +208,32 @@ data %>%
 
 
 
-<br><span class="questionNumber">Q1.4</span> - The `hrbrthemes` package provides my favourite style. Install the package, load it, and apply the `theme_ipsum()`. Documentation is [here](https://github.com/hrbrmstr/hrbrthemes).
 
 
-```{r}
+
+
+
+<br><br><br><span class="questionNumber">Q1.4</span> The `hrbrthemes` package provides my favourite style. Install the package, load it, and apply the `theme_ipsum()`. Documentation is [here](https://github.com/hrbrmstr/hrbrthemes).
+
+```{r, eval=FALSE, class.source="Question",echo=TRUE }
+# Libraries
+library(tidyverse)
+library(hrbrthemes)
+library(viridis)
+
+# Load dataset from github
+data <- read.table("https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/1_OneNum.csv", header=TRUE)
+
+# Make the histogram
+data %>%
+  filter( price<300 ) %>%
+  ggplot( aes(x=price)) +
+    stat_bin(breaks=seq(0,300,10), fill="#69b3a2", color="#e9ecef", alpha=0.9) +
+    ggtitle("Night price distribution of Airbnb appartements") +
+    theme_ipsum()
+```
+
+```{r, class.source="Correction",fig.show="hide",echo=FALSE,     fig.show='asis'}
 # Libraries
 library(tidyverse)
 library(hrbrthemes)
@@ -215,9 +266,20 @@ Annotation is a crucial component of a good dataviz. It can turn a boring graphi
 ## &rarr; Text
 The most common type of annotation is text. Let's say you have a spike in a line plot. It totally makes sense to highlight it, and explain more in details what it is about.
 
-<br><span class="questionNumber">Q1.1</span> - Build a line plot showing the bitcoin price evolution between 2013 and 2018. Dataset is located [here]("https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/3_TwoNumOrdered.csv") and can be read directly with `read.table()`. What part of the chart would you highlight?
+<br><br><br><span class="questionNumber">Q1.1</span> Build a line plot showing the bitcoin price evolution between 2013 and 2018. Dataset is located [here]("https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/3_TwoNumOrdered.csv") and can be read directly with `read.table()`. What part of the chart would you highlight?
 
-```{r, fig.align="center"}
+
+```{r, eval=FALSE, class.source="Question",echo=TRUE }
+# Load dataset from github
+data <- read.table("https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/3_TwoNumOrdered.csv", header=T)
+data$date <- as.Date(data$date)
+
+# plot
+...
+```
+
+
+```{r, class.source="Correction",fig.show="hide",echo=FALSE}
 # Load dataset from github
 data <- read.table("https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/3_TwoNumOrdered.csv", header=T)
 data$date <- as.Date(data$date)
@@ -229,7 +291,12 @@ data %>%
 ```
 
 
-<br><span class="questionNumber">Q1.2</span> - Use the `annotate()` function to add text. Annotate requires several arguments:
+
+
+
+
+
+<br><br><br><span class="questionNumber">Q1.2</span> Use the `annotate()` function to add text. Annotate requires several arguments:
 
 - `geom`: type of annotation, use `text`
 - `x`: position on the X axis
@@ -237,8 +304,15 @@ data %>%
 - `label`: what you want to write
 - Optional: `color`, `size`, `angle` and [more](https://www.r-graph-gallery.com/233-add-annotations-on-ggplot2-chart/).
 
+```{r, eval=FALSE, class.source="Question",echo=TRUE }
+# plot
+data %>%
+  ggplot( aes(x=date, y=value)) +
+    geom_line(color="#69b3a2") +
+    annotate( x=as.Date("2017-01-01"), ...)
+```
 
-```{r}
+```{r, class.source="Correction",fig.show="hide",echo=FALSE}
 # plot
 data %>%
   ggplot( aes(x=date, y=value)) +
@@ -253,10 +327,28 @@ data %>%
 
 ## &rarr; Shape
 
-<br><span class="questionNumber">Q1.3</span> - To highlight the spike even more, draw a circle around it. Note that you first need to find the exact spike date and its value
+<br><span class="questionNumber">Q1.3</span> Find the exact spike `date` and its `value`. Use this information to add a circle around the spike. This is done with the `annotate()` function once more:
+
+- `geom`: use `point`
+- `x`: position on the X axis
+- `y`: position on the Y axis
+- `shape`: use 21, to be able to change the `fill` and the `color` arguments. (fill=inside, color=stroke)
+- `size`
+
+```{r, eval=FALSE, class.source="Question",echo=TRUE }
+# Find spike date and value:
+# data %>% arrange(...) ...
+
+# plot
+data %>% 
+  ggplot( aes(x=date, y=value)) +
+    geom_line(color="#69b3a2") +
+    annotate(geom="text", ...) +
+    annotate(geom="point", ...)
+```
 
 
-```{r, fig.align="center"}
+```{r, class.source="Correction",fig.show="hide",echo=FALSE}
 # Find spike date and value:
 # data %>% arrange(desc(value)) %>% head(1)
 
@@ -274,9 +366,22 @@ data %>%
 
 ## &rarr; Abline
 
-<br><span class="questionNumber">Q1.4</span> - Add a horizontal abline to show what part of the curve is over 5000 $. This is possible thanks to the `geom_hline()` function that requires its `yintercept` argument.
+<br><span class="questionNumber">Q1.4</span> Add a horizontal abline to show what part of the curve is over 5000 $. This is possible thanks to the `geom_hline()` function that requires its `yintercept` argument.
 
-```{r, fig.align="center"}
+
+```{r, eval=FALSE, class.source="Question",echo=TRUE }
+# Find spike date and value:
+# data %>% arrange(desc(value)) %>% head(1)
+
+# plot
+data %>% 
+  ...
+    annotate(...) +
+    annotate(...) +
+    geom_hline(..., color=..., size=...)
+```
+
+```{r, class.source="Correction",fig.show="hide",echo=FALSE}
 # Find spike date and value:
 # data %>% arrange(desc(value)) %>% head(1)
 
@@ -301,9 +406,9 @@ data %>%
 
 ## &rarr; Color
 
-<br><span class="questionNumber">Q1.5</span> - Build a scatterplot based on the `gapminder` dataset. Use `gdpPercap` for the X axis, `lifeExp` for the Y axis, and `pop` for bubble size. Keep only the year 2007.
+<br><span class="questionNumber">Q1.5</span> Build a scatterplot based on the `gapminder` dataset. Use `gdpPercap` for the X axis, `lifeExp` for the Y axis, and `pop` for bubble size. Keep only the year 2007.
 
-```{r, fig.align="center"}
+```{r, class.source="Correction",fig.show="hide",echo=FALSE}
 # Data are available in the gapminder package
 library(gapminder)
 data <- gapminder %>% filter(year=="2007") %>% select(-year)
@@ -315,7 +420,7 @@ ggplot( data, aes(x=gdpPercap, y=lifeExp, size = pop, color = continent)) +
 ```
 
 
-<br><span class="questionNumber">Q1.6</span> - Highlight South Africa in the chart: draw it in red, with all other circles in grey. Follow those steps:
+<br><br><br><span class="questionNumber">Q1.6</span> - Highlight South Africa in the chart: draw it in red, with all other circles in grey. Follow those steps:
 
 - create a new column with `mutate`: this new column has the value `yes` if `country=="South Africa"`, `no` otherwise. This is possible thanks to the `??felse` function.
 - in the aesthetics part of the ggplot call, use this new column to control dot colors
@@ -338,9 +443,9 @@ data %>%
 
 ## &rarr; Multiple text
 
-<br><span class="questionNumber">Q1.7</span> - Highlight every country with `gdpPercap > 5000` & `lifeExp < 60` in red. Write their names using the geom_text_repel of the `ggrepel` package
+<br><br><br><span class="questionNumber">Q1.7</span> - Highlight every country with `gdpPercap > 5000` & `lifeExp < 60` in red. Write their names using the geom_text_repel of the `ggrepel` package
 
-```{r, fig.align="center"}
+```{r}
 
 # ggrepel
 library(ggrepel)
@@ -422,9 +527,9 @@ ggplot(data, aes(x=total_bill)) +
 # 4- Saving plots
 ***
 
-<br><span class="questionNumber">Q4.1</span> - Save the previous chart as a `PNG` file using the `ggsave()` function. Where is saved the file?
+<br><br><br><span class="questionNumber">Q4.1</span> - Save the previous chart as a `PNG` file using the `ggsave()` function. Where is saved the file?
 
-```{r, fig.align="center"}
+```{r}
 # save the plot in an object called p
 p <- ggplot(data, aes(x=total_bill)) +
   geom_histogram() +
@@ -435,7 +540,7 @@ ggsave(p, filename = "chartFromRPractical.png")
 ```
 
 
-<br><span class="questionNumber">Q4.2</span> - Specify the complete path before file name to save the chart at a specific location.
+<br><br><br><span class="questionNumber">Q4.2</span> - Specify the complete path before file name to save the chart at a specific location.
 
 
 
@@ -449,25 +554,25 @@ ggsave(p, filename = "chartFromRPractical.png")
 
 ## &rarr; Discrete color palette
 
-<br><span class="questionNumber">Q5.1</span> - Build a scatterplot based on the iris dataset. Use `Sepal.Length` for the X axis, `Petal.Length` for the Y axis. Use `color=Species` to color groups.
+<br><br><br><span class="questionNumber">Q5.1</span> - Build a scatterplot based on the iris dataset. Use `Sepal.Length` for the X axis, `Petal.Length` for the Y axis. Use `color=Species` to color groups.
  
 
-```{r, fig.align="center"}
+```{r}
 ggplot(iris, aes(x=Sepal.Length, y=Petal.Length, color=Species)) +
   geom_point()
 ```
 
 
-```{r, fig.align="center"}
+```{r}
 ggplot(iris, aes(x=Sepal.Length, y=Petal.Length, color=Species)) +
   geom_point() +
   scale_color_manual( values=c("red","green","blue"))
 ```
 
-<br><span class="questionNumber">Q5.1</span> - Build a scatterplot based on the iris dataset. Use `Sepal.Length` for the X axis, `Petal.Length` for the Y axis. Use `color=Species` to color groups.
+<br><br><br><span class="questionNumber">Q5.1</span> - Build a scatterplot based on the iris dataset. Use `Sepal.Length` for the X axis, `Petal.Length` for the Y axis. Use `color=Species` to color groups.
  
 
-```{r, fig.align="center"}
+```{r}
 ggplot(iris, aes(x=Sepal.Length, y=Petal.Length, color=Species)) +
   geom_point() +
   scale_color_brewer(palette = "Set3")
@@ -481,10 +586,10 @@ ggplot(iris, aes(x=Sepal.Length, y=Petal.Length, color=Species)) +
 
 ## &rarr; Continuous color palette
 
-<br><span class="questionNumber">Q5.1</span> - Build a scatterplot based on the iris dataset. Use `Sepal.Length` for the X axis, `Petal.Length` for the Y axis. Use `color=Species` to color groups.
+<br><br><br><span class="questionNumber">Q5.1</span> - Build a scatterplot based on the iris dataset. Use `Sepal.Length` for the X axis, `Petal.Length` for the Y axis. Use `color=Species` to color groups.
  
 
-```{r, fig.align="center"}
+```{r}
 ggplot(iris, aes(x=Sepal.Length, y=Petal.Length, color=Sepal.Length)) +
   geom_point() +
   scale_color_distiller(palette = "RdPu")
@@ -503,7 +608,7 @@ An interactive chart is a chart on which you can zoom, hover shapes to get toolt
 
 ## &rarr; Plotly
 
-<br><span class="questionNumber">Q6.1</span> - Build the `gapminder` bubble plot you've already done in the annotation part of this practical. Store it in an object called `p`
+<br><br><br><span class="questionNumber">Q6.1</span> - Build the `gapminder` bubble plot you've already done in the annotation part of this practical. Store it in an object called `p`
 ```{r, fig.align="center"}
 # load data
 library(gapminder)
@@ -517,7 +622,7 @@ p
 ```
 
 
-<br><span class="questionNumber">Q6.2</span> - Install and load the `plotly` package. Build an interactive chart using the `ggplotly()` function. What are the new functionalities of this chart? Is it useful? What could be better?
+<br><br><br><span class="questionNumber">Q6.2</span> - Install and load the `plotly` package. Build an interactive chart using the `ggplotly()` function. What are the new functionalities of this chart? Is it useful? What could be better?
 ```{r, fig.align="center"}
 # Interactive version
 library(plotly)
@@ -528,7 +633,7 @@ ggplotly(p)
 
 
 
-<br><span class="questionNumber">Q6.3</span> - Let's improve the tooltip of the chart:
+<br><br><br><span class="questionNumber">Q6.3</span> - Let's improve the tooltip of the chart:
 
 - build a new column called `myText`. Fill it with whatever you want to show in the tooltip.
 - add a new aesthetics: `text=myText`
@@ -557,10 +662,10 @@ ggplotly(p, tooltip="text")
 ## &rarr; HTML widgets
 
 
-<br><span class="questionNumber">Q6.4</span> - `Plotly` is not the only html widget. Visit [this website](https://www.htmlwidgets.org/showcase_leaflet.html) to have an overview of what kind of interactive chart you can do with `R`.
+<br><br><br><span class="questionNumber">Q6.4</span> - `Plotly` is not the only html widget. Visit [this website](https://www.htmlwidgets.org/showcase_leaflet.html) to have an overview of what kind of interactive chart you can do with `R`.
 
 
-<br><span class="questionNumber">BONUS</span> - Use the HTML widget called `dygraphs` to build an interactive line plot of the bitcoin price. Try to reproduce the example below.
+<br><br><br><span class="questionNumber">BONUS</span> - Use the HTML widget called `dygraphs` to build an interactive line plot of the bitcoin price. Try to reproduce the example below.
 ```{r, fig.align="center", out.width="100%"}
 # Library
 library(dygraphs)
@@ -588,7 +693,7 @@ dygraph(don) %>%
 
 
 
-<br><span class="questionNumber">BONUS</span> - Use the HTML widget called `leaflet` to build an interactive map showing the earthquakes described in the dataset called `quakes`
+<br><br><br><span class="questionNumber">BONUS</span> - Use the HTML widget called `leaflet` to build an interactive map showing the earthquakes described in the dataset called `quakes`
 
 ```{r}
 # Library
