@@ -420,14 +420,25 @@ ggplot( data, aes(x=gdpPercap, y=lifeExp, size = pop, color = continent)) +
 ```
 
 
-<br><br><br><span class="questionNumber">Q1.6</span> - Highlight South Africa in the chart: draw it in red, with all other circles in grey. Follow those steps:
+<br><br><br><span class="questionNumber">Q1.6</span> Highlight South Africa in the chart: draw it in red, with all other circles in grey. Follow those steps:
 
-- create a new column with `mutate`: this new column has the value `yes` if `country=="South Africa"`, `no` otherwise. This is possible thanks to the `??felse` function.
+- create a new column with `mutate`: this new column has the value `yes` if `country=="South Africa"`, `no` otherwise. This is possible thanks to the `ifelse` function.
 - in the aesthetics part of the ggplot call, use this new column to control dot colors
-- use
+- use `scale_color_manual()` to control the color of both group. Use a bright color for the country to highlight, and grey for the others.
 
 
-```{r, fig.align="center"}
+```{r, eval=FALSE, class.source="Question",echo=TRUE }
+# Basic scatterplot
+data %>%
+  mutate(isSouthAfrica = ... ) %>%
+  ggplot( .., color = isSouthAfrica)) +
+    geom... +
+    scale_color_manual(values=c("grey", "red")) +
+    theme(legend.position="none")
+```
+
+
+```{r, class.source="Correction",fig.show="hide",echo=FALSE}
 # Basic scatterplot
 data %>%
   mutate(isSouthAfrica = ifelse(country=="South Africa", "yes", "no")) %>%
@@ -443,10 +454,26 @@ data %>%
 
 ## &rarr; Multiple text
 
-<br><br><br><span class="questionNumber">Q1.7</span> - Highlight every country with `gdpPercap > 5000` & `lifeExp < 60` in red. Write their names using the geom_text_repel of the `ggrepel` package
+<br><span class="questionNumber">Q1.7</span> Highlight every country with `gdpPercap > 5000` & `lifeExp < 60` in red. Write their names using the `geom_text_repel of the `ggrepel` package to avoid text overlapping.
 
-```{r}
+```{r, eval=FALSE, class.source="Question",echo=TRUE }
+# ggrepel
+library(ggrepel)
 
+# prepare data
+tmp <- data %>%
+  mutate( annotation = ifelse(...))
+
+# plot
+tmp %>%
+  ggplot( ...) +
+    geom... +
+    theme(...) +
+    geom_text_repel(data=tmp %>% filter(annotation=="yes"), aes(label=country), size=4 )
+```
+
+
+```{r, class.source="Correction",fig.show="hide",echo=FALSE}
 # ggrepel
 library(ggrepel)
 
@@ -463,7 +490,6 @@ tmp %>%
 ```
 
 
-## &rarr; Bonus
 
 
 
@@ -475,9 +501,26 @@ tmp %>%
 # 3- Faceting
 ***
 
+Faceting is a very powerful data visualization technique. It splits the figure in small subsets, usually one by level of a categorical variable. `ggplot2` offers 2 functions to build small multiples: `facet_wrap()` and `facet_grid()`.
 
 ## &rarr; facet_wrap()
-```{r}
+
+<br><span class="questionNumber">Q3.1</span> Build a [spaghetti chart](https://www.data-to-viz.com/caveat/spaghetti.html) showing the evolution of 9 baby names in the US. (See code [here](https://www.data-to-viz.com/caveat/spaghetti.html)). What's wrong with this chart?
+
+```{r, eval=FALSE, class.source="Question",echo=TRUE }
+# Libraries
+library(babynames)
+
+# Load dataset from github
+data <- babynames %>% 
+  filter(name %in% c("Ashley", "Amanda", "Jessica",    "Patricia", "Linda", "Deborah",   "Dorothy", "Betty", "Helen")) %>%
+  filter(sex=="F")
+
+...
+
+```  
+
+```{r, class.source="Correction",fig.show="hide",echo=FALSE}
 # Libraries
 library(babynames)
 
@@ -493,7 +536,56 @@ data %>%
     ggtitle("Popularity of American names in the previous 30 years")
 ```  
   
-```{r}
+  
+  
+  
+  
+<br><br><br><span class="questionNumber">Q3.2</span> Use the `facet_wrap()` function to build one area chart for each name. Basically, you have to provide a categorical variable to the function. It will build a chart for each of its level. 
+
+Have a look to the Y axis. What do you observe? Is it a good option?
+
+```{r, eval=FALSE, class.source="Question",echo=TRUE }
+...
+    geom_area() +
+    ... +
+    facet_wrap(~name)
+```
+
+You should get something like this:
+
+```{r, class.source="Correction",fig.show="hide",echo=FALSE, fig.show='asis'}
+data %>%
+  ggplot( aes(x=year, y=n, group=name, fill=name)) +
+    geom_area() +
+    ggtitle("Popularity of American names in the previous 30 years") +
+    theme(
+      legend.position="none",
+    ) +
+    facet_wrap(~name)
+```
+
+
+
+
+
+
+
+
+
+
+
+<br><br><br><span class="questionNumber">Q3.3</span> Find out how to use the `scale` option to have different Y axis limits for each subset. Does it make sense? In which conditions?
+
+```{r, eval=FALSE, class.source="Question",echo=TRUE }
+...
+    geom_area() +
+    ... +
+    facet_wrap(~name, scale=)
+```
+
+You should get something like this:
+
+```{r, class.source="Correction",fig.show="hide",echo=FALSE, fig.show='asis'}
 data %>%
   ggplot( aes(x=year, y=n, group=name, fill=name)) +
     geom_area() +
@@ -504,9 +596,33 @@ data %>%
     facet_wrap(~name, scale="free_y")
 ```
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ## &rarr; facet_grid()
 
-```{r}
+<br><span class="questionNumber">Bonus</span> Find out what the `facet_grid()` function does. Why is it different to `facet_wrap()`?
+
+<br><br><br><span class="questionNumber">Bonus</span>Load [this](https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/10_OneNumSevCatSubgroupsSevObs.csv) dataset in R. Build a histogram for every combination of day and sex using `facet_wrap()`
+
+
+
+You should get something like:
+
+```{r, class.source="Correction",fig.show="hide",echo=FALSE, fig.show='asis'}
 # Load dataset from github
 data <- read.table("https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/10_OneNumSevCatSubgroupsSevObs.csv", header=T, sep=",")
 
@@ -516,8 +632,10 @@ ggplot(data, aes(x=total_bill)) +
   facet_grid(sex~day)
 ```
   
-  
-  
+
+
+
+
 
 
 
@@ -548,33 +666,100 @@ ggsave(p, filename = "chartFromRPractical.png")
 
 # 5- Colors
 ***
+Picking the right colors is a crucial step for a good dataviz. R offers awesome options and packages to make the right choices. Here is an overview of the main options.
+
 
 ## &rarr; One color
+
+<br><span class="questionNumber">Q5.1</span> Several options exist to pick one color. Change the histogram color using the `fill` argument on the chart below using each of the following options:
+
+- plain color name. Type `colors()` to see all the options.
+- using `rgb()`. This function provides the quantity of red, green and blue to build the color. Plus an argument for the opacity. Example, try `rgb(.7, .6, .3, .2)`
+- using `HTML` colors. Use [this website](https://www.w3schools.com/colors/colors_picker.asp) to pick one you like.
+
+```{r, eval=FALSE, class.source="Question",echo=TRUE }
+# Load dataset from github
+data <- read.table("https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/1_OneNum.csv", header=TRUE)
+
+# Make the histogram
+data %>%
+  filter( price<300 ) %>%
+  ggplot( aes(x=price)) +
+    geom_histogram(fill="steelblue") +
+    ggtitle("Night price distribution of Airbnb appartements") +
+    theme_ipsum()
+```
+
+
+```{r, class.source="Correction",fig.show="hide",echo=FALSE, fig.show='asis'}
+# Load dataset from github
+data <- read.table("https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/1_OneNum.csv", header=TRUE)
+
+# Make the histogram
+data %>%
+  filter( price<300 ) %>%
+  ggplot( aes(x=price)) +
+    geom_histogram(fill="steelblue") +
+    ggtitle("Night price distribution of Airbnb appartements") +
+    theme_ipsum()
+```
+
+
+
+
+
+
 
 
 ## &rarr; Discrete color palette
 
-<br><br><br><span class="questionNumber">Q5.1</span> - Build a scatterplot based on the iris dataset. Use `Sepal.Length` for the X axis, `Petal.Length` for the Y axis. Use `color=Species` to color groups.
- 
 
-```{r}
+
+
+<br><span class="questionNumber">Q5.2</span> Build a scatterplot based on the `iris` dataset. Use `Sepal.Length` for the X axis, `Petal.Length` for the Y axis. Use `color=Species` to color groups.
+ 
+```{r, class.source="Correction",fig.show="hide",echo=FALSE}
 ggplot(iris, aes(x=Sepal.Length, y=Petal.Length, color=Species)) +
   geom_point()
 ```
 
 
-```{r}
+
+
+
+
+<br><br><br><span class="questionNumber">Q5.3</span> It is possible to set the color scale manually using `scale_color_manual()`. Use the hint below to see how to use it and apply it to the previous scatterplot. 
+
+<u>Note</u>: it is a bad practice to pick colors randomly. Your palette will be ugly and will probably not be colorblind friendly.
+ 
+```{r, eval=FALSE, class.source="Question",echo=TRUE }
 ggplot(iris, aes(x=Sepal.Length, y=Petal.Length, color=Species)) +
   geom_point() +
   scale_color_manual( values=c("red","green","blue"))
 ```
 
-<br><br><br><span class="questionNumber">Q5.1</span> - Build a scatterplot based on the iris dataset. Use `Sepal.Length` for the X axis, `Petal.Length` for the Y axis. Use `color=Species` to color groups.
- 
-
-```{r}
+```{r, class.source="Correction",fig.show="hide",echo=FALSE}
 ggplot(iris, aes(x=Sepal.Length, y=Petal.Length, color=Species)) +
   geom_point() +
+  scale_color_manual( values=c("red","green","blue"))
+```
+
+
+
+
+<br><br><br><span class="questionNumber">Q5.4</span> Fortunately, people already tackeled this issue for us and created packages offering nice color palettes. The most famous one is `RColorBrewer`. Palettes are already available in `ggplot2`. See all of them [here](https://www.r-graph-gallery.com/38-rcolorbrewers-palettes/), and use one on your chart using `scale_color_brewer()`.
+
+Pick the one you like the most and apply it to to previous scatterplot. Use it to color the `Species`.
+ 
+```{r, eval=FALSE, class.source="Question",echo=TRUE }
+... +
+  scale_color_brewer(palette = )
+```
+
+
+```{r, class.source="Correction",fig.show="hide",echo=FALSE}
+ggplot(iris, aes(x=Sepal.Length, y=Petal.Length, color=Species)) +
+  geom_point(size=4) +
   scale_color_brewer(palette = "Set3")
 ```
 
@@ -586,14 +771,25 @@ ggplot(iris, aes(x=Sepal.Length, y=Petal.Length, color=Species)) +
 
 ## &rarr; Continuous color palette
 
-<br><br><br><span class="questionNumber">Q5.1</span> - Build a scatterplot based on the iris dataset. Use `Sepal.Length` for the X axis, `Petal.Length` for the Y axis. Use `color=Species` to color groups.
- 
+<br><span class="questionNumber">Q5.5</span> `RColorBrewer` also offers continuous color palette. However they must be called through the `scale_color_distiller` function. Use the palette you like the most to color circles depending on `Sepal_length`.
 
-```{r}
+```{r, eval=FALSE, class.source="Question",echo=TRUE }
+... +
+  scale_color_distil...
+```
+
+
+```{r, class.source="Correction",fig.show="hide",echo=FALSE, fig.show='asis'}
 ggplot(iris, aes(x=Sepal.Length, y=Petal.Length, color=Sepal.Length)) +
   geom_point() +
   scale_color_distiller(palette = "RdPu")
 ```
+
+
+
+
+
+
 
 
 
@@ -606,10 +802,24 @@ An interactive chart is a chart on which you can zoom, hover shapes to get toolt
 
 
 
+
+
 ## &rarr; Plotly
 
-<br><br><br><span class="questionNumber">Q6.1</span> - Build the `gapminder` bubble plot you've already done in the annotation part of this practical. Store it in an object called `p`
-```{r, fig.align="center"}
+<br><span class="questionNumber">Q6.1</span> Build the `gapminder` bubble plot you've already done in the annotation part of this practical. Store it in an object called `p`
+```{r, eval=FALSE, class.source="Question",echo=TRUE }
+# load data
+library(gapminder)
+data <- gapminder %>% filter(year=="2007") %>% select(-year)
+
+# Basic ggplot
+p <- data %>%
+  ggplot( ...
+p
+```
+
+
+```{r, class.source="Correction",fig.show="hide",echo=FALSE}
 # load data
 library(gapminder)
 data <- gapminder %>% filter(year=="2007") %>% select(-year)
@@ -622,7 +832,9 @@ p
 ```
 
 
-<br><br><br><span class="questionNumber">Q6.2</span> - Install and load the `plotly` package. Build an interactive chart using the `ggplotly()` function. What are the new functionalities of this chart? Is it useful? What could be better?
+
+
+<br><br><br><span class="questionNumber">Q6.2</span> Install and load the `plotly` package. Build an interactive chart using the `ggplotly()` function. What are the new functionalities of this chart? Is it useful? What could be better?
 ```{r, fig.align="center"}
 # Interactive version
 library(plotly)
@@ -633,14 +845,25 @@ ggplotly(p)
 
 
 
-<br><br><br><span class="questionNumber">Q6.3</span> - Let's improve the tooltip of the chart:
+<br><br><br><span class="questionNumber">Q6.3</span> Let's improve the tooltip of the chart:
 
 - build a new column called `myText`. Fill it with whatever you want to show in the tooltip.
 - add a new aesthetics: `text=myText`
 - in the `ggplotly()` call, add `tooltip="text"`
 
-```{r, fig.align="center"}
 
+```{r, eval=FALSE, class.source="Question",echo=TRUE }
+# Basic ggplot
+p <- data %>%
+  mutate(myText=...) %>%
+  ggplot( aes(...text=myText)) +
+   ...
+
+ggplotly(p, tooltip="text")
+```
+
+
+```{r, class.source="Correction",fig.show="hide",echo=FALSE}
 # Basic ggplot
 p <- data %>%
   mutate(myText=paste("This country is: " , country )) %>%
@@ -658,42 +881,9 @@ ggplotly(p, tooltip="text")
 
 
 
+## &rarr; Leaflet
 
-## &rarr; HTML widgets
-
-
-<br><br><br><span class="questionNumber">Q6.4</span> - `Plotly` is not the only html widget. Visit [this website](https://www.htmlwidgets.org/showcase_leaflet.html) to have an overview of what kind of interactive chart you can do with `R`.
-
-
-<br><br><br><span class="questionNumber">BONUS</span> - Use the HTML widget called `dygraphs` to build an interactive line plot of the bitcoin price. Try to reproduce the example below.
-```{r, fig.align="center", out.width="100%"}
-# Library
-library(dygraphs)
-library(xts)          # To make the convertion data-frame / xts format
-
-# Load dataset from github
-data <- read.table("https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/3_TwoNumOrdered.csv", header=T)
-data$date <- as.Date(data$date)
-
-# Then you can create the xts format, and thus use dygraph
-don <- xts(x = data$value, order.by = data$date)
-
-# Use the dygraph HTML widget
-dygraph(don) %>%
-  dyOptions(labelsUTC = TRUE, fillGraph=TRUE, fillAlpha=0.1, drawGrid = FALSE, colors="#D8AE5A") %>%
-  dyRangeSelector() %>%
-  dyCrosshair(direction = "vertical") %>%
-  dyHighlight(highlightCircleSize = 5, highlightSeriesBackgroundAlpha = 0.2, hideOnMouseOut = FALSE)  %>%
-  dyRoller(rollPeriod = 1)
-```
-
-
-
-
-
-
-
-<br><br><br><span class="questionNumber">BONUS</span> - Use the HTML widget called `leaflet` to build an interactive map showing the earthquakes described in the dataset called `quakes`
+<br><span class="questionNumber">Q6.4</span> Use the HTML widget called `leaflet` to build an interactive map showing the earthquakes described in the dataset called `quakes`. Code is fully provided here, since cartography with R could deserve an entire practical. The idea is just to discover to potential offered in a few lines of code:
 
 ```{r}
 # Library
@@ -723,6 +913,118 @@ leaflet(quakes) %>%
 
 
 
+## &rarr; Heatmap
+The `d3heatmap` package allows to build interactive heatmaps in a few line of code. Let's see how it works
+
+<br><br><br><span class="questionNumber">Q6.5</span> Load [this](http://datasets.flowingdata.com/ppg2008.csv) dataset in R. Have a look to the first rows. Describe it. ([source](https://flowingdata.com/2010/01/21/how-to-make-a-heatmap-a-quick-and-easy-solution/))
+
+```{r, eval=FALSE, class.source="Question",echo=TRUE }
+# Load data
+data <- read.csv(...)
+```
+
+
+```{r, class.source="Correction",fig.show="hide",echo=FALSE}
+# Load data
+data <- read.csv("http://datasets.flowingdata.com/ppg2008.csv", row.names = 1)
+
+# head(data)
+# summary(data)
+```
+
+
+
+
+
+
+
+
+
+<br><br><br><span class="questionNumber">Q6.6</span> R offers a `heatmap()` function to build... heatmaps! Apply it to the dataset. What do you observe? Are you happy with this heatmap? What's wrong with it? How can we solve the issue?
+
+<u>Note</u>: input dataset must be at the `matrix` format to be accepted by the function. Use `as.matrix()` to get this format.
+
+
+```{r, class.source="Correction",fig.show="hide",echo=FALSE}
+# Make the heatmap
+heatmap( as.matrix(data) )
+```
+
+
+
+
+
+
+
+<br><br><br><span class="questionNumber">Q6.7</span> Check the `scale` option of the `heatmap()` function. What is it for? Can it help us? How? Use it to improve the heatmap.
+
+```{r, class.source="Correction",fig.show="hide",echo=FALSE}
+# Make the heatmap
+heatmap( as.matrix(data), scale = "column")
+```
+
+
+
+
+
+<br><br><br><span class="questionNumber">Q6.8</span> `d3heatmap()` uses exactly the same syntax than `heatmap()`. Use the function to get an interactive version of the previous heatmap!
+
+```{r, eval=FALSE, class.source="Question",echo=TRUE }
+# Load library
+library(d3heatmap)
+
+# Build heatmap
+d3heatmap(...)
+```
+
+
+```{r, class.source="Correction",fig.show="hide",echo=FALSE}
+# Load library
+library(d3heatmap)
+
+# Build heatmap
+d3heatmap(data, scale = "column")
+```
+
+
+
+
+
+## &rarr; Time Seriesx
+
+<br><span class="questionNumber">Q6.9</span> - Use the HTML widget called `dygraphs` to build an interactive line plot of the [bitcoin price evolution](https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/3_TwoNumOrdered.csv). Try to reproduce the example below.
+
+```{r, fig.align="center", out.width="100%"}
+# Library
+library(dygraphs)
+library(xts)          # To make the convertion data-frame / xts format
+
+# Load dataset from github
+data <- read.table("https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/3_TwoNumOrdered.csv", header=T)
+data$date <- as.Date(data$date)
+
+# Then you can create the xts format, and thus use dygraph
+don <- xts(x = data$value, order.by = data$date)
+
+# Use the dygraph HTML widget
+dygraph(don) %>%
+  dyOptions(labelsUTC = TRUE, fillGraph=TRUE, fillAlpha=0.1, drawGrid = FALSE, colors="#D8AE5A") %>%
+  dyRangeSelector() %>%
+  dyCrosshair(direction = "vertical") %>%
+  dyHighlight(highlightCircleSize = 5, highlightSeriesBackgroundAlpha = 0.2, hideOnMouseOut = FALSE)  %>%
+  dyRoller(rollPeriod = 1)
+```
+
+
+
+
+
+
+
+
+## &rarr; HTML widgets
+
+<br><span class="questionNumber">BONUS</span> - The packages showcased above are just a sample of the possibilities offered by the html widgets. Visit [this website](https://www.htmlwidgets.org/showcase_leaflet.html) to have an overview of what kind of interactive chart you can do with `R`. Pick your favorite example and try to reproduce it.
 
 
 
@@ -734,4 +1036,84 @@ leaflet(quakes) %>%
 
 
 
+
+
+
+
+
+
+
+# 7- Scales
+***
+Scales control the details of how data values are translated to visual properties. [Many different scales](https://ggplot2.tidyverse.org/reference/index.html#section-scales) are offered by ggplot2. The most widely one is probably the log scale.
+
+<br><br><br><span class="questionNumber">Q7.1</span> Build a histogram showing the night price distribution of the french riviera apartements ([data here](https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/1_OneNum.csv)). Keep all the data, with extreme values.
+
+```{r, eval=FALSE, class.source="Question",echo=TRUE }
+# Load dataset from github
+data <- read.table("https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/1_OneNum.csv", header=TRUE)
+
+# Make the histogram
+data %>%
+  ...
+    geom_histogram() +
+    ...
+```
+
+
+```{r, class.source="Correction",fig.show="hide",echo=FALSE,     fig.show='asis'}
+# Libraries
+library(ggplot2)
+
+# Load dataset from github
+data <- read.table("https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/1_OneNum.csv", header=TRUE)
+
+# Make the histogram
+data %>%
+  ggplot( aes(x=price)) +
+    geom_histogram(color="white", fill="steelblue4") +
+    ggtitle("Night price distribution of Airbnb appartements") +
+    xlab("Night price") +
+    ylab("Number of apartments")
+```
+
+
+
+
+
+<br><br><br><span class="questionNumber">Q7.2</span> A common practice to avoid the effect of extreme values is to filter data, or use `xlim` to zoom on a part of the axis. Another approach is to use `scale_x_log10()` to apply a log transformation. Apply this function to the histogram.
+
+```{r, eval=FALSE, class.source="Question",echo=TRUE }
+# Load dataset from github
+data <- read.table("https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/1_OneNum.csv", header=TRUE)
+
+# Make the histogram
+data %>%
+  ...
+    geom_histogram() +
+    ... +
+    scale_x_log10()
+```
+
+
+```{r, class.source="Correction",fig.show="hide",echo=FALSE,     fig.show='asis'}
+# Libraries
+library(ggplot2)
+
+# Load dataset from github
+data <- read.table("https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/1_OneNum.csv", header=TRUE)
+
+# Make the histogram
+data %>%
+  ggplot( aes(x=price)) +
+    geom_histogram(color="white", fill="steelblue4") +
+    ggtitle("Night price distribution of Airbnb appartements") +
+    xlab("Night price") +
+    ylab("Number of apartments") +
+    scale_x_log10()
+```
+
+
+
+<br><br><br><span class="questionNumber">Q7.3</span> What's the difference between `scale_x_log10()` and applying the `log()` function on the dataset before doing the chart? Why is it better?
 
